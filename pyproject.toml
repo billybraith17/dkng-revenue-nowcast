@@ -1,0 +1,36 @@
+[project]
+name = "ggr"
+version = "0.1.0"
+description = "Nowcasting DraftKings' quarterly revenue bottom-up from US state gaming regulator filings"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "tenacity>=8.3",
+    "pandas>=2.2",
+    "openpyxl>=3.1",
+    "pyarrow>=16",
+    "beautifulsoup4>=4.12",
+    "lxml>=5",
+    "xlrd>=2.0.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ggr"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

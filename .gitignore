@@ -1,4 +1,5 @@
 scratch/
+docs/
 .DS_Store
 __pycache__/
 *.pyc
@@ -7,3 +8,4 @@ __pycache__/
 .ruff_cache/
 data/raw/
 data/processed/
+CLAUDE.md
