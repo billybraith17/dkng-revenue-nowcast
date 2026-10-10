@@ -47,3 +47,9 @@ def test_non_numeric_value_raises():
 def test_negative_revenue_preserved():
     df = tidy_frame([_row(gross_revenue=-50_000.0)])
     assert df["gross_revenue"].iloc[0] == -50_000.0
+
+
+def test_empty_rows_give_empty_frame_with_schema():
+    df = tidy_frame([])
+    assert list(df.columns) == TIDY_COLUMNS
+    assert df.empty
