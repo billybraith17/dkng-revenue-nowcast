@@ -1,8 +1,10 @@
+import datetime as dt
+
 import pytest
 
 from ggr.ingest.mi import FILES as MI_FILES  # noqa: F401  (import guards module health)
 from ggr.ingest.ny import MOBILE_OPERATORS
-from ggr.operators import ALIASES, canonicalize
+from ggr.operators import ALIASES, canonicalize, canonicalize_dated
 
 
 def test_all_ny_mobile_operators_are_known():
@@ -26,8 +28,10 @@ def test_case_and_whitespace_insensitive():
 def test_word_boundaries_prevent_false_matches():
     # "gan" (the 2021 MI platform) must not swallow names that merely contain it
     assert canonicalize("GAN") == "gan"
-    assert canonicalize("Mohegan Digital") is None
     assert canonicalize("Michigan Wagering Co") is None
+    # ...while "Mohegan Digital" correctly reaches the Mohegan parent slug,
+    # not "gan" (longest-alias-first + word boundaries)
+    assert canonicalize("Mohegan Digital") == "mohegan"
 
 
 def test_longest_alias_wins():
@@ -59,7 +63,41 @@ def test_alias_table_is_normalized():
         ("Golden Nugget", "golden_nugget"),
         ("TwinSpires", "twinspires"),
         ("FoxBet", "foxbet"),
+        # PA licensees
+        ("HOLLYWOOD CASINO AT THE MEADOWS", "draftkings"),
+        ("MEADOWS", "draftkings"),
+        ("VALLEY FORGE CASINO", "fanduel"),
+        ("SUGARHOUSE CASINO", "rsi"),
+        # IL licensees
+        ("Casino Queen, Inc.", "draftkings"),
+        ("Northside Crown Gaming LLC", "draftkings"),
+        ("FHR-Illinois  LLC", "circa"),  # double space as printed by IGB
     ],
 )
 def test_known_mappings(raw, slug):
     assert canonicalize(raw) == slug
+
+
+def test_exact_only_aliases_do_not_leak_into_containment():
+    # "RIVERS" (PA FY18-19) must map exactly, but the word inside a longer
+    # unknown name must not silently claim it for Rush Street.
+    assert canonicalize("RIVERS") == "rsi"
+    assert canonicalize("Two Rivers Casino Resort") is None
+
+
+class TestEraOverrides:
+    def test_par_a_dice_boundaries(self):
+        d = dt.date
+        raw = "Par-A-Dice Gaming Corporation"
+        assert canonicalize_dated(raw, "IL", d(2020, 8, 31)) == "fanduel"
+        assert canonicalize_dated(raw, "IL", d(2022, 2, 28)) == "fanduel"  # inclusive end
+        assert canonicalize_dated(raw, "IL", d(2022, 3, 1)) == "betmgm"  # inclusive start
+        assert canonicalize_dated(raw, "IL", d(2026, 5, 31)) == "betmgm"
+
+    def test_undated_lookup_refuses_era_licensees(self):
+        # Without a date the mapping is ambiguous — must be None (loud), never a guess.
+        assert canonicalize("Par-A-Dice Gaming Corporation") is None
+
+    def test_other_states_unaffected(self):
+        assert canonicalize_dated("DraftKings", "NY", dt.date(2022, 1, 9)) == "draftkings"
+        assert canonicalize_dated("Par-A-Dice Gaming Corporation", "PA", dt.date(2021, 1, 31)) is None
