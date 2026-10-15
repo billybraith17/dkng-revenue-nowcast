@@ -13,7 +13,7 @@ def fake_net(tmp_path, monkeypatch):
     """Redirect the cache to tmp_path and count fake downloads."""
     calls = []
 
-    def _fake_get(url):
+    def _fake_get(url, browser_ua=False):
         calls.append(url)
         return SimpleNamespace(content=b"payload-1", headers={"content-type": "text/plain"})
 

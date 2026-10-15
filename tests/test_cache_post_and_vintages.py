@@ -12,7 +12,7 @@ from ggr import cache
 def fake_net(tmp_path, monkeypatch):
     state = {"content": b"v1", "get_calls": 0, "post_calls": 0}
 
-    def _fake_get(url):
+    def _fake_get(url, browser_ua=False):
         state["get_calls"] += 1
         return SimpleNamespace(content=state["content"], headers={"content-type": "text/csv"})
 
@@ -76,3 +76,24 @@ def test_fetch_force_vintage_applies_to_get_too(fake_net, tmp_path):
     fake_net["content"] = b"v2"
     cache.fetch("https://x.test/facts.json", force=True)
     assert len(list(tmp_path.glob("*facts.json.v*"))) == 1
+
+
+def test_browser_ua_recorded_in_manifest(tmp_path, monkeypatch):
+    seen = {}
+
+    def _fake_get(url, browser_ua=False):
+        seen["browser_ua"] = browser_ua
+        return SimpleNamespace(content=b"page", headers={"content-type": "text/html"})
+
+    monkeypatch.setattr(cache, "DATA_RAW", tmp_path)
+    monkeypatch.setattr(cache, "MANIFEST", tmp_path / "manifest.jsonl")
+    monkeypatch.setattr(cache, "_get", _fake_get)
+
+    cache.fetch("https://waf.test/listing", browser_ua=True)
+    assert seen["browser_ua"] is True
+    (row,) = _manifest_rows(tmp_path)
+    assert row["ua"] == "browser"
+
+    cache.fetch("https://waf.test/other")
+    assert seen["browser_ua"] is False
+    assert "ua" not in _manifest_rows(tmp_path)[1]

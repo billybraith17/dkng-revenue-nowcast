@@ -114,6 +114,32 @@ ALIASES: dict[str, str] = {
     "815 entertainment": "hard_rock",  # Hard Rock Rockford
     "casino queen marquette, inc.": "draftkings",  # DKNG-owned sister property
     "northside crown gaming llc": "draftkings",  # Crown Gaming = DKNG subsidiary (Wrigley license)
+    # New Jersey (DGE prints licensees; online skins BLEND under a licence —
+    # the plan's known NJ caveat. Brand slugs only where one skin dominates
+    # and the pairing is stable: Resorts Digital ≈ DraftKings, Meadowlands ≈
+    # FanDuel (+ small partners), Borgata = MGM's own. Entity slugs otherwise.)
+    "resorts digital gaming, llc": "draftkings",
+    "new meadowlands racetrack": "fanduel",  # printed with and without ", LLC"
+    "borgata hotel casino & spa": "betmgm",
+    # Bally's AC licence lineage (Park Place era included; ownership moved
+    # Caesars→Bally's Corp Nov 2020). From 2024 its online line is mostly the
+    # Fanatics NJ skin — the licensee-blend caveat, documented in parse/nj.py.
+    "bally's ac": "bally",  # covers "PREMIER ENT[ERTAINMENT] AC, LLC DBA BALLY'S AC" variants
+    "bally's atlantic city": "bally",
+    "bally's park place": "bally",  # printed with and without "LLC"
+    "hard rock": "hard_rock",  # matches "HARD ROCK HOTEL AND CASINO ATLANTIC CITY"
+    # Ocean's name is printed four different ways across 2018 alone
+    "ocean casino resort": "ocean",
+    "ocean resort casino": "ocean",
+    "ocean resorts casino": "ocean",
+    "ocean resorts": "ocean",
+    # Resorts' own return ("DGMB" in every spelling variant, including the
+    # "RESORTS CASNIO HOTEL" typo era) lives in ERA_OVERRIDES: its online
+    # line is zero until Sep 2024, then carries DraftKings' revenue.
+    "tropicana": "caesars",  # Caesars-owned; hosts Caesars' NJ online book
+    "boardwalk regency": "caesars",  # Caesars AC's legal entity name
+    "fr park racing, lp (freehold raceway)": "freehold",
+    "monmouth park": "monmouth",  # covers all Darby Development spellings incl. typos
 }
 
 
@@ -124,11 +150,16 @@ def _norm(name: str) -> str:
 # Licensees whose online skin changed *company* over time. Static aliases
 # can't express these; parsers with a period in hand use canonicalize_dated().
 # Boundaries are verified against the volume series itself (e.g. Par-A-Dice
-# online: FanDuel-scale until Feb 2021, ~zero, then BetMGM's Mar 2022 launch).
-# Dates are inclusive; None = open-ended.
+# online: FanDuel-scale until Feb 2021, ~zero, then BetMGM's Mar 2022 launch;
+# NJ's DGMB return carries $0 online until DraftKings' revenue moves onto it
+# from Resorts Digital's discontinued return in Sep 2024). Dates are
+# inclusive; None = open-ended. Matching is whole-word containment, so one
+# entry covers all of a licensee's spelling variants (DGMB appears four ways).
 ERA_OVERRIDES: list[tuple[str, str, str | None, str | None, str]] = [
     ("IL", "par-a-dice gaming corporation", None, "2022-02-28", "fanduel"),
     ("IL", "par-a-dice gaming corporation", "2022-03-01", None, "betmgm"),
+    ("NJ", "dgmb", None, "2024-08-31", "resorts_ac"),
+    ("NJ", "dgmb", "2024-09-01", None, "draftkings"),
 ]
 
 
@@ -161,11 +192,17 @@ def canonicalize(operator_raw: str) -> str | None:
     return None
 
 
+_ERA_PATTERNS = [
+    (state, re.compile(rf"(?<!\w){re.escape(alias)}(?!\w)"), start, end, slug)
+    for state, alias, start, end, slug in ERA_OVERRIDES
+]
+
+
 def canonicalize_dated(operator_raw: str, state: str, period_end: dt.date) -> str | None:
     """canonicalize(), but era-aware for licensees whose skin changed company."""
     name = _norm(operator_raw)
-    for st, alias, start, end, slug in ERA_OVERRIDES:
-        if st != state or alias != name:
+    for st, pattern, start, end, slug in _ERA_PATTERNS:
+        if st != state or not pattern.search(name):
             continue
         after = start is None or period_end >= dt.date.fromisoformat(start)
         before = end is None or period_end <= dt.date.fromisoformat(end)
