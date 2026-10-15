@@ -97,6 +97,21 @@ class TestEraOverrides:
     def test_undated_lookup_refuses_era_licensees(self):
         # Without a date the mapping is ambiguous — must be None (loud), never a guess.
         assert canonicalize("Par-A-Dice Gaming Corporation") is None
+        assert canonicalize("RESORTS CASINO HOTEL (DGMB CASINO, LLC.)") is None
+
+    def test_nj_dgmb_handoff(self):
+        d = dt.date
+        # DGMB's online line is $0 until DraftKings' revenue moves onto it
+        # (Sep 2024, from Resorts Digital's discontinued return) — and the
+        # containment matching covers all four spelling variants.
+        for raw in (
+            "RESORTS CASINO HOTEL (DGMB CASINO, LLC.)",
+            "RESORTS CASINO HOTEL (DGMB CASINO LLC)",
+            "RESORTS CASNIO HOTEL (DGMB CASINO LLC)",  # regulator typo era
+            "Resorts Casino - DGMB",
+        ):
+            assert canonicalize_dated(raw, "NJ", d(2024, 8, 31)) == "resorts_ac"
+            assert canonicalize_dated(raw, "NJ", d(2024, 9, 30)) == "draftkings"
 
     def test_other_states_unaffected(self):
         assert canonicalize_dated("DraftKings", "NY", dt.date(2022, 1, 9)) == "draftkings"

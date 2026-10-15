@@ -25,6 +25,15 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ggr.config import DATA_RAW, REQUEST_INTERVAL, USER_AGENT
 
+# Some state sites (njoag.gov listing pages; michigan.gov, see ggr.wayback)
+# blanket-403 any non-browser User-Agent. Where a *listing page* is the only
+# thing blocked, we fetch it with a browser profile and keep the identifying
+# UA for the actual data files; the manifest records which UA was used.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+)
+
 MANIFEST = DATA_RAW / "manifest.jsonl"
 
 _last_request_at = 0.0
@@ -39,11 +48,10 @@ def _throttle() -> None:
 
 
 @retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=2, max=30))
-def _get(url: str) -> httpx.Response:
+def _get(url: str, browser_ua: bool = False) -> httpx.Response:
     _throttle()
-    with httpx.Client(
-        headers={"User-Agent": USER_AGENT}, follow_redirects=True, timeout=60
-    ) as client:
+    ua = BROWSER_USER_AGENT if browser_ua else USER_AGENT
+    with httpx.Client(headers={"User-Agent": ua}, follow_redirects=True, timeout=60) as client:
         response = client.get(url)
         response.raise_for_status()
         return response
@@ -107,15 +115,16 @@ def _store(path: Path, content: bytes, meta: dict) -> Path:
     return path
 
 
-def fetch(url: str, subdir: str = "", force: bool = False) -> Path:
+def fetch(url: str, subdir: str = "", force: bool = False, browser_ua: bool = False) -> Path:
     """Return the local path for ``url``, downloading it only if not already cached."""
     path = cached_path(url, subdir)
     if path.exists() and not force:
         return path
-    response = _get(url)
-    return _store(
-        path, response.content, {"url": url, "content_type": response.headers.get("content-type")}
-    )
+    response = _get(url, browser_ua=browser_ua)
+    meta = {"url": url, "content_type": response.headers.get("content-type")}
+    if browser_ua:
+        meta["ua"] = "browser"
+    return _store(path, response.content, meta)
 
 
 def fetch_post(url: str, data: dict, name: str, subdir: str = "", force: bool = False) -> Path:
