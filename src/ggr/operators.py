@@ -140,6 +140,64 @@ ALIASES: dict[str, str] = {
     "boardwalk regency": "caesars",  # Caesars AC's legal entity name
     "fr park racing, lp (freehold raceway)": "freehold",
     "monmouth park": "monmouth",  # covers all Darby Development spellings incl. typos
+    # Indiana (IGC prints per-skin domains: "AS - Sportsbook.DraftKings.com").
+    # Word-boundary matching on the domain token does the work; these aliases
+    # cover tokens not already in the table.
+    "betamerica": "twinspires",  # Churchill Downs brand, renamed TwinSpires (sequential)
+    "caesarsonline": "caesars",
+    "unibet": "unibet",  # Kindred; exited US 2023
+    "thescore": "penn",  # theScore Bet, Penn's brand (also the 2025 relaunch)
+    "williamhill": "william_hill",  # ran simultaneously with Caesars skins in IN — kept separate
+    "betway": "betway",
+    "barstool": "penn",
+    "barstoolsportbook": "penn",  # official filing typo, missing the 's'
+    "espnbet": "penn",
+    "smarkets": "smarkets",
+    "getsbk": "smarkets",  # SBK = Smarkets' consumer app
+    "maximbet": "maximbet",
+    "hardrocksportsbook": "hard_rock",
+    # Iowa casino licensees (pre-2023 era reports blend skins per casino,
+    # like NJ — entity slugs). Distinctive-token aliases because wrapped
+    # column headers reconstruct with drifted words and footnote digits.
+    "ameristar": "ameristar",
+    "catfish bend": "catfish_bend",
+    "marquette": "casino_queen_marquette",  # incl. the Bally's Marquette rename
+    "dubuque": "diamond_jo_dubuque",
+    "worth": "diamond_jo_worth",
+    "grand falls": "grand_falls",
+    "horseshoe": "caesars",  # Horseshoe Council Bluffs, Caesars-owned
+    "waterloo": "isle_waterloo",
+    "bettendorf": "isle_bettendorf",
+    "lakeside": "lakeside",
+    "prairie meadows": "prairie_meadows",
+    "q casino": "q_casino",
+    "dubuque racing": "q_casino",  # DRA operates Q Casino; outranks "dubuque" (longer)
+    "rhythm city": "rhythm_city",
+    "riverside casino": "riverside_ia",
+    "rose": "wild_rose",  # Wild Rose Clinton/Emmetsburg/Jefferson, one company
+    # Iowa "BY OPERATOR" entities (2023+ reports — true operator-level)
+    "betfair": "fanduel",  # Betfair Interactive US = FanDuel's legal entity
+    "crown": "draftkings",  # Crown IA Gaming — DKNG subsidiary naming again
+    "american wagering": "caesars",  # Caesars' William Hill US entity
+    "digital gaming corporation": "betway",  # DGC USA operates Betway in the US
+    "hillside": "bet365",  # Hillside = bet365's corporate name
+    "fbg": "fanatics",  # Fanatics Betting & Gaming
+    "penn sports": "penn",
+    "twin river": "bally",  # Bally's Corp's former name
+    "circa": "circa",
+    "bluebet": "bluebet",
+    "tipico": "tipico",
+    "sporttrade": "sporttrade",
+    "sbopco": "superbook",  # SuperBook Sports opco
+    "sce partners": "sce_partners",
+    "elite": "elite",  # Elite Sportsbook (Q Casino / Elite Hospitality group)
+    "sports information": "drf",  # Sports Information Group = DRF Bets
+    "score digital": "penn",  # Score Digital Sports Ventures = theScore, Penn's brand
+    "fubo": "fubo",  # fubo Gaming, exited 2022
+    # Exact garble repairs: "Sports Information Group, LLC" wraps and its
+    # first words drift into the SCE column; only these exact full strings.
+    "sce partners, llc sports information": "sce_partners",
+    "group, llc": "drf",
 }
 
 
