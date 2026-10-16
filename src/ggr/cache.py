@@ -21,9 +21,19 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from ggr.config import DATA_RAW, REQUEST_INTERVAL, USER_AGENT
+
+# Retry transient transport failures only; an HTTP 4xx (e.g. a month that
+# isn't published yet) is a final answer and must raise immediately as
+# HTTPStatusError, not burn retries and surface as tenacity's RetryError.
+_RETRY_NETWORK = dict(
+    retry=retry_if_exception_type(httpx.TransportError),
+    stop=stop_after_attempt(4),
+    wait=wait_exponential(multiplier=2, max=30),
+    reraise=True,
+)
 
 # Some state sites (njoag.gov listing pages; michigan.gov, see ggr.wayback)
 # blanket-403 any non-browser User-Agent. Where a *listing page* is the only
@@ -47,7 +57,7 @@ def _throttle() -> None:
     _last_request_at = time.monotonic()
 
 
-@retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=2, max=30))
+@retry(**_RETRY_NETWORK)
 def _get(url: str, browser_ua: bool = False) -> httpx.Response:
     _throttle()
     ua = BROWSER_USER_AGENT if browser_ua else USER_AGENT
@@ -57,7 +67,7 @@ def _get(url: str, browser_ua: bool = False) -> httpx.Response:
         return response
 
 
-@retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=2, max=30))
+@retry(**_RETRY_NETWORK)
 def _post(url: str, data: dict) -> httpx.Response:
     _throttle()
     with httpx.Client(

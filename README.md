@@ -2,25 +2,28 @@
 
 Every US state with legal online sports betting publishes official handle and gross gaming
 revenue (GGR), and the large states publish it per operator, monthly (New York: weekly).
-This project scrapes those primary sources across ~12 regulators, aggregates DraftKings'
+This project scrapes those primary sources across seven state regulators, aggregates DraftKings'
 state-level figures bottom-up, and nowcasts quarterly net revenue **before earnings** —
 the same tracker gaming-sector analysts maintain at buy-side funds, built entirely from
 public data.
 
 ## Status
 
-Phase 1 (in progress): repo scaffold, DKNG ground truth from SEC EDGAR, New York and
-Michigan adapters end-to-end, state coverage audit.
+In progress. Built so far: DraftKings ground truth from SEC EDGAR, and regulator
+adapters for seven states (New York, Michigan, Pennsylvania, Illinois, New Jersey,
+Indiana, Iowa), each with golden-file tests against frozen source files. Next:
+coverage analysis and the walk-forward revenue nowcast.
 
 ## Layout
 
 ```
-src/ggr/          the package: ingest/ (fetch + discover per source), parse/ (raw file →
-                  tidy schema), features/, models/, eval/
-data/raw/         immutable cache of every downloaded artifact (gitignored)
-data/processed/   tidy parquet/csv tables (gitignored)
-tests/            golden-file parser tests against frozen fixtures
-docs/             coverage audit and write-up material
+src/ggr/            cache.py (throttled immutable fetch layer), operators.py
+                    (entity resolution), schema.py (tidy schema), wayback.py,
+                    ingest/ (discover + fetch per state), parse/ (raw file →
+                    tidy schema)
+data/raw/           immutable cache of every downloaded artifact (gitignored)
+data/processed/     tidy parquet tables (gitignored)
+tests/              golden-file + synthetic tests, frozen fixtures
 ```
 
 ## Setup
