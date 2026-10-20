@@ -9,10 +9,11 @@ public data.
 
 ## Status
 
-In progress. Built so far: DraftKings ground truth from SEC EDGAR, and regulator
+In progress. Built so far: DraftKings ground truth from SEC EDGAR; regulator
 adapters for seven states (New York, Michigan, Pennsylvania, Illinois, New Jersey,
-Indiana, Iowa), each with golden-file tests against frozen source files. Next:
-coverage analysis and the walk-forward revenue nowcast.
+Indiana, Iowa), each with golden-file tests against frozen source files; and a
+coverage analysis showing state-reported gross revenue runs ~50–60% of DraftKings'
+reported net revenue from 2022. Next: the walk-forward revenue nowcast.
 
 ## Layout
 
