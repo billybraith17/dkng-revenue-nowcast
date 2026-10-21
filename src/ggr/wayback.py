@@ -1,14 +1,11 @@
 """Wayback Machine access for sources whose sites block non-browser clients.
 
-michigan.gov sits behind an Akamai WAF that 403s any non-browser User-Agent —
-including for public records and robots.txt. Rather than impersonate a browser,
-we read the Internet Archive's crawls: complete for finished years, and each
-yearly MGCB file embeds the prior year as a comparison sheet, so revisions
-propagate. Snapshot URLs are immutable, which suits the raw cache perfectly.
+michigan.gov's firewall rejects any non-browser User-Agent, so Michigan is read
+from Internet Archive snapshots. Closed years are complete, and each yearly MGCB
+file repeats the prior year as a comparison sheet, so revisions carry forward.
+Snapshot URLs never change, which fits the immutable raw cache.
 
-Known gap: the current year's file is only as fresh as the Archive's last crawl.
-Fixing that (authenticated Save Page Now, or fetching from an unblocked runner)
-is a Phase 2+ item tracked in docs/coverage-audit.md.
+Known gap: the current year is only as fresh as the Archive's latest crawl.
 """
 
 from __future__ import annotations

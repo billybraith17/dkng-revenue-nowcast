@@ -99,8 +99,8 @@ def parse_pdf(path: Path, year: int, month: int, source_url: str) -> pd.DataFram
             # From Jan 2024 each licensee also files an "ONLINE SPORTS
             # WAGERING SKIN DETAIL REPORT" page (per-skin split!). Skipped
             # here so it doesn't double-count as a continuation page —
-            # parsing it for true operator-level NJ data is a tracked
-            # enhancement in docs/coverage-audit.md.
+            # parsing it for true operator-level NJ data is a planned
+            # enhancement.
             if "SKIN DETAIL REPORT" in text.upper():
                 continue
             header_idx = next(
