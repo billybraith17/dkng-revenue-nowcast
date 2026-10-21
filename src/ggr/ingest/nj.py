@@ -6,7 +6,7 @@ themselves live on the old nj.gov docs tree, which accepts our identifying
 UA). Filenames follow ``SWRTaxReturns/{year}/{Month}{year}.pdf``.
 
 Amendment files ("Amendments2019.pdf" etc.) are amended historical returns —
-skipped for now and logged, tracked in docs/coverage-audit.md.
+skipped for now and logged as an open item.
 
 Run ``uv run python -m ggr.ingest.nj`` to write data/processed/nj_monthly.parquet.
 """
