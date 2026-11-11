@@ -111,7 +111,7 @@ def quarter_completeness(df: pd.DataFrame) -> pd.Series:
 def state_quarter_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     """One row per (quarter, state, product): DK-attributable revenue observed."""
     parts = []
-    for state, df in frames.items():
+    for df in frames.values():
         completeness = quarter_completeness(df)
         allocated = allocate_to_quarters(dk_attributable(df))
         if allocated.empty:

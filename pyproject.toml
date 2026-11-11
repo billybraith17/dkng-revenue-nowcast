@@ -12,7 +12,6 @@ dependencies = [
     "pyarrow>=16",
     "beautifulsoup4>=4.12",
     "lxml>=5",
-    "xlrd>=2.0.2",
     "pdfplumber>=0.11.10",
 ]
 
@@ -32,6 +31,10 @@ packages = ["src/ggr"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+
+[tool.ruff.lint]
+# E/F: pycodestyle and pyflakes; I: import order; B: likely bugs (bugbear).
+select = ["E", "F", "I", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
