@@ -32,12 +32,8 @@ MONTH_HEADER = re.compile(
     r"^(january|february|march|april|may|june|july|august|september|october|november|december)"
     r"\s+(\d{4})$"
 )
-MONTH_NUM = {
-    m: i + 1
-    for i, m in enumerate(
-        "january february march april may june july august september october november december".split()
-    )
-}
+MONTHS = "january february march april may june july august september october november december"
+MONTH_NUM = {m: i + 1 for i, m in enumerate(MONTHS.split())}
 
 SECTIONS = {"total sports wagering", "retail sports wagering", "online sports wagering"}
 METRICS = {

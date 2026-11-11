@@ -3,7 +3,7 @@
 Two table styles, both column-banded with wrapped header names:
 
 - Casino table (all eras): casinos as columns, RETAIL/INTERNET metric rows.
-- "ONLINE SPORTS WAGERING BY OPERATOR" section (~mid-2023 onward): operator
+- "ONLINE SPORTS WAGERING BY OPERATOR" section (Jul 2021 onward): operator
   *entities* as columns ("Crown IA Gaming, LLC" = DraftKings, "Betfair
   Interactive US LLC" = FanDuel, "Hillside (Iowa) LLC" = bet365…) — true
   operator-level data.
@@ -35,12 +35,8 @@ from ggr.schema import tidy_frame
 
 TITLE = re.compile(r"SPORTS WAGERING REVENUE REPORT\s*-+\s*([A-Z]+)\s+(\d{4})")
 BY_OPERATOR = re.compile(r"SPORTS WAGERING BY OPERATOR")
-MONTH_NUM = {
-    m.upper(): i + 1
-    for i, m in enumerate(
-        "January February March April May June July August September October November December".split()
-    )
-}
+MONTHS = "January February March April May June July August September October November December"
+MONTH_NUM = {m.upper(): i + 1 for i, m in enumerate(MONTHS.split())}
 METRIC_PREFIXES = ("SPORTS WAGERING", "RETAIL", "INTERNET", "STATE TAX")
 FOOTNOTE_CHARS = str.maketrans("", "", "¹²³⁴⁵⁶⁷⁸*")
 CROSS_CHECK_TOLERANCE = 1.0
@@ -121,7 +117,7 @@ def _bands(lines: list[list[dict]]) -> list[tuple[list[str], list[float], list[f
                 # multi-word names travel together instead of drifting
                 # word-by-word into neighbouring columns.
                 segments: list[list[dict]] = [[nl[0]]]
-                for prev, w in zip(nl, nl[1:]):
+                for prev, w in zip(nl, nl[1:], strict=False):
                     if w["x0"] - prev["x1"] > 6:
                         segments.append([])
                     segments[-1].append(w)
@@ -188,7 +184,7 @@ def parse_report(pages, year: int, month: int, source_url: str, fetched_at: str)
         named_total = sum(
             r
             for names, receipts, _ in casino_bands
-            for n, r in zip(names, receipts)
+            for n, r in zip(names, receipts, strict=True)
             if r is not None and "TOTAL" not in n.upper()
         )
         if abs(named_total - operator_total) > CROSS_CHECK_TOLERANCE:
@@ -199,7 +195,7 @@ def parse_report(pages, year: int, month: int, source_url: str, fetched_at: str)
 
     records = []
     for names, receipts, handles in chosen:
-        for name, gross, handle in zip(names, receipts, handles):
+        for name, gross, handle in zip(names, receipts, handles, strict=True):
             if not name or "TOTAL" in name.upper():
                 continue
             if gross is None and handle is None:

@@ -16,8 +16,8 @@ from __future__ import annotations
 import re
 from urllib.parse import unquote, urljoin
 
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
 
 from ggr import cache
 from ggr.config import DATA_PROCESSED
@@ -74,7 +74,7 @@ def discover() -> dict[str, str]:
 
 def build() -> pd.DataFrame:
     frames = []
-    for fy, url in discover().items():
+    for url in discover().values():
         frames.append(parse_workbook(cache.fetch(url, subdir="pa"), url))
     combined = pd.concat(frames, ignore_index=True)
     # Fiscal years are disjoint; any collision means PGCB republished a month.

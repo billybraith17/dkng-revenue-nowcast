@@ -32,12 +32,8 @@ PDF_NAME = re.compile(
     r"(January|February|March|April|May|June|July|August|September|October|November|December)"
     r"(\d{4})\.pdf$"
 )
-MONTH_NUM = {
-    m: i + 1
-    for i, m in enumerate(
-        "January February March April May June July August September October November December".split()
-    )
-}
+MONTHS = "January February March April May June July August September October November December"
+MONTH_NUM = {m: i + 1 for i, m in enumerate(MONTHS.split())}
 
 
 FIRST_MONTH = (2018, 6)

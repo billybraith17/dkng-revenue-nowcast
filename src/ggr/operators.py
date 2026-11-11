@@ -94,7 +94,9 @@ ALIASES: dict[str, str] = {
     # Illinois (IGB prints the master licensee entity; skin pairs per the IGB
     # "Authorized Operating Sportsbooks" page, stable since each launch except
     # where noted).
-    "casino queen, inc.": "draftkings",  # DKNG owns Casino Queen; IL online home since Aug 2021
+    # Casino Queen is DraftKings' market-access and branding partner, not a
+    # DraftKings-owned casino; DraftKings' Illinois online book since Aug 2020.
+    "casino queen, inc.": "draftkings",
     "fairmount park, inc.": "fanduel",
     "midwest gaming & entertainment, llc": "rsi",  # Rivers Des Plaines / BetRivers
     "elgin riverboat resort": "caesars",  # Grand Victoria / Caesars Sportsbook
@@ -112,7 +114,9 @@ ALIASES: dict[str, str] = {
     "the rock island boatworks, llc": "bally",  # Bally's Quad Cities
     "southern illinois riverboat/casino cruises llc": "caesars",  # Harrah's Metropolis, retail
     "815 entertainment": "hard_rock",  # Hard Rock Rockford
-    "casino queen marquette, inc.": "draftkings",  # DKNG-owned sister property
+    # Casino Queen's Iowa sister company (not DraftKings-owned). The name does
+    # not appear in any Illinois report fetched so far.
+    "casino queen marquette, inc.": "draftkings",
     "northside crown gaming llc": "draftkings",  # Crown Gaming = DKNG subsidiary (Wrigley license)
     # New Jersey (DGE prints licensees; online skins BLEND under a licence —
     # the plan's known NJ caveat. Brand slugs only where one skin dominates
@@ -175,7 +179,7 @@ ALIASES: dict[str, str] = {
     "rhythm city": "rhythm_city",
     "riverside casino": "riverside_ia",
     "rose": "wild_rose",  # Wild Rose Clinton/Emmetsburg/Jefferson, one company
-    # Iowa "BY OPERATOR" entities (2023+ reports — true operator-level)
+    # Iowa "BY OPERATOR" entities (reports from Jul 2021 — true operator-level)
     "betfair": "fanduel",  # Betfair Interactive US = FanDuel's legal entity
     "crown": "draftkings",  # Crown IA Gaming — DKNG subsidiary naming again
     "american wagering": "caesars",  # Caesars' William Hill US entity
@@ -212,7 +216,7 @@ def _norm(name: str) -> str:
 # NJ's DGMB return carries $0 online until DraftKings' revenue moves onto it
 # from Resorts Digital's discontinued return in Sep 2024). Dates are
 # inclusive; None = open-ended. Matching is whole-word containment, so one
-# entry covers all of a licensee's spelling variants (DGMB appears four ways).
+# entry covers all of a licensee's spelling variants (DGMB appears five ways).
 ERA_OVERRIDES: list[tuple[str, str, str | None, str | None, str]] = [
     ("IL", "par-a-dice gaming corporation", None, "2022-02-28", "fanduel"),
     ("IL", "par-a-dice gaming corporation", "2022-03-01", None, "betmgm"),

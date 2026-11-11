@@ -25,12 +25,10 @@ import pandas as pd
 from ggr.operators import canonicalize
 from ggr.schema import tidy_frame
 
-MONTHS = {
-    m: i + 1
-    for i, m in enumerate(
-        "january february march april may june july august september october november december".split()
-    )
-}
+MONTH_NAMES = (
+    "january february march april may june july august september october november december"
+)
+MONTHS = {m: i + 1 for i, m in enumerate(MONTH_NAMES.split())}
 
 GROUP_SPECS = {
     "osb": {
