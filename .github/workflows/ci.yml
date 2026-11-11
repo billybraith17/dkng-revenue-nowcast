@@ -25,6 +25,9 @@ jobs:
       - name: Lint
         run: uv run ruff check src tests
 
+      - name: Format check
+        run: uv run ruff format --check
+
       # Tests run against frozen fixtures, so no network access is needed.
       - name: Test
         run: uv run pytest

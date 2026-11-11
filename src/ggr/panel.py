@@ -38,9 +38,7 @@ def _month_pieces(row) -> list[tuple[pd.Timestamp, float, int]]:
         month = pd.Period(cur, freq="M")
         seg_end = min(row.period_end, month.end_time.normalize())
         days = (seg_end - cur).days + 1
-        pieces.append(
-            (month.end_time.normalize(), row.gross_revenue * days / total_days, days)
-        )
+        pieces.append((month.end_time.normalize(), row.gross_revenue * days / total_days, days))
         cur = seg_end + pd.Timedelta(days=1)
     return pieces
 
@@ -91,9 +89,7 @@ def as_of_view(panel: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
         .groupby(["state", "month_end"])["days"]
         .sum()
     )
-    grouped = avail.groupby(["state", "month_end"], as_index=False).agg(
-        revenue=("revenue", "sum")
-    )
+    grouped = avail.groupby(["state", "month_end"], as_index=False).agg(revenue=("revenue", "sum"))
     grouped["days"] = grouped.set_index(["state", "month_end"]).index.map(days)
     grouped["month_days"] = grouped["month_end"].dt.day
     launch = grouped["month_end"] == grouped["state"].map(first_month)
@@ -108,9 +104,7 @@ def as_of_view(panel: pd.DataFrame, as_of: pd.Timestamp) -> pd.DataFrame:
     return grouped[["state", "month_end", "revenue", "complete"]]
 
 
-def impute_month(
-    view: pd.DataFrame, state: str, month_end: pd.Timestamp, window: int = 3
-) -> float:
+def impute_month(view: pd.DataFrame, state: str, month_end: pd.Timestamp, window: int = 3) -> float:
     """Impute a missing state-month from states that did publish it.
 
     The state's share of the reference states' total is estimated over its
@@ -132,8 +126,7 @@ def impute_month(
     history = history[history[state].notna() & history[refs].notna().all(axis=1)]
     if history.empty:
         raise ValueError(
-            f"no history to impute {state} {month_end.date()} "
-            f"against references {refs}"
+            f"no history to impute {state} {month_end.date()} against references {refs}"
         )
     tail = history.tail(window)
     share = (tail[state] / tail[refs].sum(axis=1)).mean()

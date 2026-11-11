@@ -79,7 +79,9 @@ def parse_workbook(path: Path, year: int, month: int, source_url: str) -> pd.Dat
                     None,
                 )
                 if gross is None:
-                    raise ValueError(f"{path.name}: block header without Gross Receipts near {cell!r}")
+                    raise ValueError(
+                        f"{path.name}: block header without Gross Receipts near {cell!r}"
+                    )
                 blocks[j] = (1, gross - j)
         for j, (h_off, g_off) in blocks.items():
             label = str(row[j]).strip() if j < len(row) and row[j] is not None else ""

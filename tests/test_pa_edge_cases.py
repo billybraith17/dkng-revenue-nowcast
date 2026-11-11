@@ -37,8 +37,12 @@ def test_online_section_only_and_retail_ignored(tmp_path):
     rows = [["MONTHLY SPORTS WAGERING REPORT"], HEADER]
     rows += _block(
         "VALLEY FORGE CASINO",
-        {"Handle*": (1000.0, 2000.0), "Revenue": (100.0, 200.0),
-         "Promotional Credits": (10.0, 20.0), "Gross Revenue (Taxable)": (90.0, 180.0)},
+        {
+            "Handle*": (1000.0, 2000.0),
+            "Revenue": (100.0, 200.0),
+            "Promotional Credits": (10.0, 20.0),
+            "Gross Revenue (Taxable)": (90.0, 180.0),
+        },
     )
     rows += [["GRAND TOTAL"], ["Handle*", None, 99999.0, None, 99999.0]]
     path = _make_workbook(tmp_path, [("FY 2022-23", rows), ("Footnotes", [["FOOTNOTES:"]])])

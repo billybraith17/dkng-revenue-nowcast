@@ -14,7 +14,9 @@ def _listing(months):
     return f"<html><body>{links}</body></html>"
 
 
-FULL_2018 = [(2018, m) for m in ("June", "July", "August", "September", "October", "November", "December")]
+FULL_2018 = [
+    (2018, m) for m in ("June", "July", "August", "September", "October", "November", "December")
+]
 
 
 class TestDiscovery:

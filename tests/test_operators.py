@@ -115,4 +115,6 @@ class TestEraOverrides:
 
     def test_other_states_unaffected(self):
         assert canonicalize_dated("DraftKings", "NY", dt.date(2022, 1, 9)) == "draftkings"
-        assert canonicalize_dated("Par-A-Dice Gaming Corporation", "PA", dt.date(2021, 1, 31)) is None
+        assert (
+            canonicalize_dated("Par-A-Dice Gaming Corporation", "PA", dt.date(2021, 1, 31)) is None
+        )

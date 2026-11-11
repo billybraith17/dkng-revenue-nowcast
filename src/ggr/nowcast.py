@@ -49,14 +49,10 @@ INTERVAL_COVERAGE = 0.8
 
 def quarter_month_ends(quarter: str) -> list[pd.Timestamp]:
     period = pd.Period(quarter, freq="Q-DEC")
-    return [
-        (period.asfreq("M", "start") + i).end_time.normalize() for i in range(3)
-    ]
+    return [(period.asfreq("M", "start") + i).end_time.normalize() for i in range(3)]
 
 
-def covered_quarter(
-    panel: pd.DataFrame, quarter: str, as_of: pd.Timestamp
-) -> tuple[float, int]:
+def covered_quarter(panel: pd.DataFrame, quarter: str, as_of: pd.Timestamp) -> tuple[float, int]:
     """(covered revenue C_q as of ``as_of``, number of imputed state-months).
 
     States enter once launched (first month with any DK data in the full
@@ -81,8 +77,11 @@ def covered_quarter(
 
 
 def fit_predict(
-    train_c: np.ndarray, train_r: np.ndarray, train_t: np.ndarray,
-    target_c: float, target_t: float,
+    train_c: np.ndarray,
+    train_r: np.ndarray,
+    train_t: np.ndarray,
+    target_c: float,
+    target_t: float,
 ) -> float:
     """OLS of log R on [1, log C, t]; returns the point prediction for R."""
     x = np.column_stack([np.ones(len(train_c)), np.log(train_c), train_t])
@@ -91,8 +90,11 @@ def fit_predict(
 
 
 def fit_predict_levels(
-    train_c: np.ndarray, train_r: np.ndarray, train_t: np.ndarray,
-    target_c: float, target_t: float,
+    train_c: np.ndarray,
+    train_r: np.ndarray,
+    train_t: np.ndarray,
+    target_c: float,
+    target_t: float,
 ) -> float:
     """OLS of R on [1, C, t] in levels; the robustness check on the log form."""
     x = np.column_stack([np.ones(len(train_c)), train_c, train_t])
@@ -122,10 +124,7 @@ def walk_forward(panel: pd.DataFrame, ground_truth: pd.DataFrame) -> pd.DataFram
         if len(train) < MIN_TRAIN_QUARTERS:
             continue
 
-        covered = {
-            q: covered_quarter(panel, q, as_of)
-            for q in [*train["quarter"], target.quarter]
-        }
+        covered = {q: covered_quarter(panel, q, as_of) for q in [*train["quarter"], target.quarter]}
         target_c, target_imputed = covered[target.quarter]
         fit_args = dict(
             train_c=np.array([covered[q][0] for q in train["quarter"]]),
@@ -173,9 +172,7 @@ def walk_forward(panel: pd.DataFrame, ground_truth: pd.DataFrame) -> pd.DataFram
                 "interval_high": high,
                 "in_interval": bool(low <= actual <= high) if pd.notna(low) else None,
                 "surprise_hit": (
-                    bool((prediction > naive) == (actual > naive))
-                    if pd.notna(naive)
-                    else None
+                    bool((prediction > naive) == (actual > naive)) if pd.notna(naive) else None
                 ),
             }
         )
@@ -203,27 +200,43 @@ def summarize(backtest: pd.DataFrame) -> pd.Series:
 
 
 def main() -> None:
-    frames = {
-        state: pd.read_parquet(PROCESSED / name) for state, name in STATE_FILES.items()
-    }
+    frames = {state: pd.read_parquet(PROCESSED / name) for state, name in STATE_FILES.items()}
     ground_truth = pd.read_csv(PROCESSED / "ground_truth_dkng.csv")
     panel = build_panel(frames)
     backtest = walk_forward(panel, ground_truth)
     backtest.to_csv(PROCESSED / "nowcast_backtest.csv", index=False)
 
     display = backtest.copy()
-    for col in ("covered_revenue", "prediction", "actual", "naive", "scalar",
-                "levels", "interval_low", "interval_high"):
+    for col in (
+        "covered_revenue",
+        "prediction",
+        "actual",
+        "naive",
+        "scalar",
+        "levels",
+        "interval_low",
+        "interval_high",
+    ):
         display[col] = (display[col] / 1e6).round(0)
     for col in ("pct_error", "naive_pct_error", "scalar_pct_error", "levels_pct_error"):
         display[col] = (display[col] * 100).round(1)
     print(
         display[
             [
-                "quarter", "as_of", "covered_revenue", "n_imputed_state_months",
-                "prediction", "actual", "pct_error", "naive_pct_error",
-                "scalar_pct_error", "levels_pct_error", "interval_low", "interval_high",
-                "in_interval", "surprise_hit",
+                "quarter",
+                "as_of",
+                "covered_revenue",
+                "n_imputed_state_months",
+                "prediction",
+                "actual",
+                "pct_error",
+                "naive_pct_error",
+                "scalar_pct_error",
+                "levels_pct_error",
+                "interval_low",
+                "interval_high",
+                "in_interval",
+                "surprise_hit",
             ]
         ].to_string(index=False)
     )

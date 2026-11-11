@@ -63,9 +63,7 @@ def test_earlier_source_wins_whole_month_slug():
 
 
 def test_missing_values_stay_missing_not_zero():
-    df = _prefer_and_aggregate(
-        pd.DataFrame([_row("Q Casino", "q_casino", 50.0, handle=None)])
-    )
+    df = _prefer_and_aggregate(pd.DataFrame([_row("Q Casino", "q_casino", 50.0, handle=None)]))
     assert pd.isna(df["handle"].iloc[0])
     assert df["gross_revenue"].iloc[0] == 50.0
 

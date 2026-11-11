@@ -99,7 +99,11 @@ def main() -> None:
         .sort_values("gross", ascending=False)
         .head(12)
     )
-    print(summary.assign(**{c: lambda d, c=c: (d[c] / 1e6).round(1) for c in ("gross", "promo")}).to_string())
+    print(
+        summary.assign(
+            **{c: lambda d, c=c: (d[c] / 1e6).round(1) for c in ("gross", "promo")}
+        ).to_string()
+    )
     print(f"\nrange: {df.period_end.min():%Y-%m} → {df.period_end.max():%Y-%m}")
     print(f"wrote {len(df)} operator-months to {out}")
 

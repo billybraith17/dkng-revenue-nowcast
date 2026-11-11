@@ -23,9 +23,7 @@ def _monthly(state, start, end, gross, operator="draftkings", lag_check=None):
 
 
 def test_monthly_piece_availability_uses_state_lag():
-    panel = build_panel(
-        {"IN": _frame([_monthly("IN", "2024-01-01", "2024-01-31", 100.0)])}
-    )
+    panel = build_panel({"IN": _frame([_monthly("IN", "2024-01-01", "2024-01-31", 100.0)])})
     assert len(panel) == 1
     # IN lag is 14 days after period end
     assert panel["available_from"].iloc[0] == pd.Timestamp("2024-02-14")
@@ -35,9 +33,7 @@ def test_monthly_piece_availability_uses_state_lag():
 
 def test_weekly_row_split_across_months():
     # Week Mon 2024-01-29 .. Sun 2024-02-04: 3 days in Jan, 4 in Feb.
-    panel = build_panel(
-        {"NY": _frame([_monthly("NY", "2024-01-29", "2024-02-04", 700.0)])}
-    )
+    panel = build_panel({"NY": _frame([_monthly("NY", "2024-01-29", "2024-02-04", 700.0)])})
     jan = panel[panel["month_end"] == "2024-01-31"]
     feb = panel[panel["month_end"] == "2024-02-29"]
     assert jan["revenue"].iloc[0] == pytest.approx(300.0)
@@ -154,6 +150,4 @@ def test_impute_month_raises_without_history():
 
 def test_build_panel_raises_on_no_dk_rows():
     with pytest.raises(ValueError, match="no DK-attributable"):
-        build_panel(
-            {"IN": _frame([_monthly("IN", "2024-01-01", "2024-01-31", 1.0, "fanduel")])}
-        )
+        build_panel({"IN": _frame([_monthly("IN", "2024-01-01", "2024-01-31", 1.0, "fanduel")])})

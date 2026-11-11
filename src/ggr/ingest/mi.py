@@ -17,10 +17,7 @@ from ggr import cache, wayback
 from ggr.config import DATA_PROCESSED
 from ggr.parse.mi import parse_workbook
 
-BASE = (
-    "https://www.michigan.gov/mgcb/-/media/Project/Websites/mgcb/"
-    "Detroit-Casino-Revenue-Files/"
-)
+BASE = "https://www.michigan.gov/mgcb/-/media/Project/Websites/mgcb/Detroit-Casino-Revenue-Files/"
 
 # Discovery is manual: the WAF blocks the listing page, and filenames changed
 # convention twice. Verified against the Wayback CDX index (July 2026).
@@ -52,9 +49,11 @@ def build() -> pd.DataFrame:
     combined = combined.drop_duplicates(
         ["state", "product", "period_end", "operator_raw"], keep="last"
     )
-    return combined.drop(columns="_file_year").sort_values(
-        ["period_end", "product", "operator_canonical"]
-    ).reset_index(drop=True)
+    return (
+        combined.drop(columns="_file_year")
+        .sort_values(["period_end", "product", "operator_canonical"])
+        .reset_index(drop=True)
+    )
 
 
 def main() -> None:
