@@ -88,7 +88,9 @@ def parse_workbook(path: Path, product: str, source_url: str) -> pd.DataFrame:
             if month is None:
                 continue
             for j in starts:
-                operator_raw = str(providers[j]).strip() if j < len(providers) and providers[j] else ""
+                operator_raw = (
+                    str(providers[j]).strip() if j < len(providers) and providers[j] else ""
+                )
                 if not operator_raw or "total" in operator_raw.lower():
                     continue
                 values = {

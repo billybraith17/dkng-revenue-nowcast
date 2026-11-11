@@ -8,7 +8,9 @@ import pytest
 from ggr.parse.mi import _number, parse_workbook
 
 
-def _make_osb_workbook(tmp_path, provider="BetMGM", month_rows=None, title="Internet Sports Betting 2024"):
+def _make_osb_workbook(
+    tmp_path, provider="BetMGM", month_rows=None, title="Internet Sports Betting 2024"
+):
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = title
@@ -110,7 +112,17 @@ def test_igaming_three_column_groups(tmp_path):
     ws.append(["Platform Provider", " BetMGM", "", "", "FanDuel"])
     ws.append(["Initial date of Operation launch", "2021-01-22", "", "", "2021-01-22"])
     # note the double spaces, as printed in the real files
-    ws.append(["Month", "Gross  Receipts", "Adjusted Gross  Receipts", "Internet Gaming State Tax", "Gross  Receipts", "Adjusted Gross  Receipts", "Internet Gaming State Tax"])
+    ws.append(
+        [
+            "Month",
+            "Gross  Receipts",
+            "Adjusted Gross  Receipts",
+            "Internet Gaming State Tax",
+            "Gross  Receipts",
+            "Adjusted Gross  Receipts",
+            "Internet Gaming State Tax",
+        ]
+    )
     ws.append(["January", 500.0, 450.0, 90.0, 700.0, 650.0, 130.0])
     path = tmp_path / "mi_ig_synthetic.xlsx"
     wb.save(path)

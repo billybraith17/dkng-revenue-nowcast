@@ -103,9 +103,7 @@ def parse_pdf(path: Path, year: int, month: int, source_url: str) -> pd.DataFram
             # enhancement.
             if "SKIN DETAIL REPORT" in text.upper():
                 continue
-            header_idx = next(
-                (i for i, ln in enumerate(lines) if RETURN_TITLE in ln.upper()), None
-            )
+            header_idx = next((i for i, ln in enumerate(lines) if RETURN_TITLE in ln.upper()), None)
             if header_idx is None:
                 if not returns:
                     raise ValueError(f"{path.name}: continuation page before any return header")

@@ -35,9 +35,12 @@ from ggr.schema import tidy_frame
 
 TITLE = re.compile(r"SPORTS WAGERING REVENUE REPORT\s*-+\s*([A-Z]+)\s+(\d{4})")
 BY_OPERATOR = re.compile(r"SPORTS WAGERING BY OPERATOR")
-MONTH_NUM = {m.upper(): i + 1 for i, m in enumerate(
-    "January February March April May June July August September October November December".split()
-)}
+MONTH_NUM = {
+    m.upper(): i + 1
+    for i, m in enumerate(
+        "January February March April May June July August September October November December".split()
+    )
+}
 METRIC_PREFIXES = ("SPORTS WAGERING", "RETAIL", "INTERNET", "STATE TAX")
 FOOTNOTE_CHARS = str.maketrans("", "", "¹²³⁴⁵⁶⁷⁸*")
 CROSS_CHECK_TOLERANCE = 1.0
@@ -130,7 +133,8 @@ def _bands(lines: list[list[dict]]) -> list[tuple[list[str], list[float], list[f
             # digits ("Marquette1") or stray digit tokens ("- 1 Clinton").
             names = [
                 re.sub(
-                    r"\s+", " ",
+                    r"\s+",
+                    " ",
                     re.sub(r"(?<=[A-Za-z])\d+|\b\d+\b", "", " ".join(p).translate(FOOTNOTE_CHARS)),
                 ).strip()
                 for p in parts
@@ -182,7 +186,8 @@ def parse_report(pages, year: int, month: int, source_url: str, fetched_at: str)
             v for _, receipts, _ in operator_bands for v in receipts if v is not None
         )
         named_total = sum(
-            r for names, receipts, _ in casino_bands
+            r
+            for names, receipts, _ in casino_bands
             for n, r in zip(names, receipts)
             if r is not None and "TOTAL" not in n.upper()
         )

@@ -43,7 +43,9 @@ def parse_csv(path: Path, year: int, month: int, source_url: str) -> pd.DataFram
     stated = " ".join(cell for row in rows[:4] for cell in row)
     expected = f"{dt.date(year, month, 1):%B %Y}"
     if expected not in stated:
-        raise ValueError(f"{path.name}: expected {expected!r} in report header, got {stated[:120]!r}")
+        raise ValueError(
+            f"{path.name}: expected {expected!r} in report header, got {stated[:120]!r}"
+        )
 
     header_idx = next(
         (i for i, row in enumerate(rows) if row[: len(EXPECTED_HEADER)] == EXPECTED_HEADER), None

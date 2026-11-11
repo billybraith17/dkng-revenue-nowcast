@@ -79,9 +79,7 @@ def test_fit_predict_recovers_exact_relationship():
     c = np.array([100.0, 150.0, 200.0, 250.0, 300.0])
     r = 2 * c
     t = np.arange(5, dtype=float)
-    assert fit_predict(c, r, t, target_c=400.0, target_t=5.0) == pytest.approx(
-        800.0, rel=1e-6
-    )
+    assert fit_predict(c, r, t, target_c=400.0, target_t=5.0) == pytest.approx(800.0, rel=1e-6)
 
 
 def test_fit_predict_levels_recovers_exact_linear_relationship():
@@ -117,9 +115,7 @@ def _synthetic_world(n_quarters=16, start_year=2020):
         monthly = 100.0 + 5.0 * i  # slow growth
         for month_end in quarter_month_ends(quarter):
             panel_rows.append(
-                _panel_row(
-                    "NY", month_end, monthly, month_end + pd.Timedelta(days=8)
-                )
+                _panel_row("NY", month_end, monthly, month_end + pd.Timedelta(days=8))
             )
         c = monthly * 3
         gt_rows.append(
@@ -127,8 +123,7 @@ def _synthetic_world(n_quarters=16, start_year=2020):
                 "quarter": quarter,
                 "revenue_usd": 2.0 * c,
                 "first_filed": (
-                    pd.Period(quarter, freq="Q-DEC").end_time.normalize()
-                    + pd.Timedelta(days=35)
+                    pd.Period(quarter, freq="Q-DEC").end_time.normalize() + pd.Timedelta(days=35)
                 ).date(),
             }
         )

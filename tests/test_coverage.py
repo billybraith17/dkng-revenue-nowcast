@@ -38,9 +38,7 @@ def _row(
 
 
 def test_month_maps_to_single_quarter():
-    assert split_period(pd.Timestamp("2024-02-01"), pd.Timestamp("2024-02-29")) == [
-        ("2024Q1", 29)
-    ]
+    assert split_period(pd.Timestamp("2024-02-01"), pd.Timestamp("2024-02-29")) == [("2024Q1", 29)]
 
 
 def test_straddling_week_prorated_by_days():
@@ -81,15 +79,14 @@ def test_period_spanning_three_quarters():
     # Not a real report shape, but the splitter must not assume ≤2 quarters.
     parts = split_period(pd.Timestamp("2024-03-01"), pd.Timestamp("2024-10-15"))
     assert parts == [("2024Q1", 31), ("2024Q2", 91), ("2024Q3", 92), ("2024Q4", 15)]
-    assert sum(d for _, d in parts) == (
-        pd.Timestamp("2024-10-15") - pd.Timestamp("2024-03-01")
-    ).days + 1
+    assert (
+        sum(d for _, d in parts)
+        == (pd.Timestamp("2024-10-15") - pd.Timestamp("2024-03-01")).days + 1
+    )
 
 
 def test_single_day_period():
-    assert split_period(pd.Timestamp("2024-06-30"), pd.Timestamp("2024-06-30")) == [
-        ("2024Q2", 1)
-    ]
+    assert split_period(pd.Timestamp("2024-06-30"), pd.Timestamp("2024-06-30")) == [("2024Q2", 1)]
 
 
 # --- DK attribution ---
@@ -241,13 +238,9 @@ def test_summary_flags_previously_seen_state_gone_missing():
             ]
         ),
         # MI appeared in 2023Q4 then stopped publishing: a lag, flag it.
-        "MI": pd.DataFrame(
-            [_row(state="MI", start="2023-12-01", end="2023-12-31", gross=50.0)]
-        ),
+        "MI": pd.DataFrame([_row(state="MI", start="2023-12-01", end="2023-12-31", gross=50.0)]),
         # OH has never appeared, so its absence is pre-launch, not a lag.
-        "OH": pd.DataFrame(
-            [_row(state="OH", start="2024-06-01", end="2024-06-30", gross=10.0)]
-        ),
+        "OH": pd.DataFrame([_row(state="OH", start="2024-06-01", end="2024-06-30", gross=10.0)]),
     }
     summary = coverage_summary(state_quarter_table(frames), _ground_truth())
     row = summary.iloc[0]
@@ -267,9 +260,7 @@ def test_summary_raises_on_unexpected_product():
 
 def test_summary_quarter_without_observations():
     ground_truth = _ground_truth()
-    frames = {
-        "NJ": pd.DataFrame([_row(start="2023-01-01", end="2023-01-31", gross=100.0)])
-    }
+    frames = {"NJ": pd.DataFrame([_row(start="2023-01-01", end="2023-01-31", gross=100.0)])}
     summary = coverage_summary(state_quarter_table(frames), ground_truth)
     row = summary.iloc[0]
     assert row["observed_total"] == 0.0

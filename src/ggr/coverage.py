@@ -44,8 +44,7 @@ COMPLETE_THRESHOLD = 0.999
 def dk_attributable(df: pd.DataFrame) -> pd.DataFrame:
     """Rows whose revenue lands in DKNG's income statement."""
     mask = (df["operator_canonical"] == "draftkings") | (
-        (df["operator_canonical"] == "golden_nugget")
-        & (df["period_end"] >= GNOG_ACQUIRED_FROM)
+        (df["operator_canonical"] == "golden_nugget") & (df["period_end"] >= GNOG_ACQUIRED_FROM)
     )
     return df[mask]
 
@@ -117,12 +116,9 @@ def state_quarter_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
         allocated = allocate_to_quarters(dk_attributable(df))
         if allocated.empty:
             continue
-        grouped = (
-            allocated.groupby(["quarter", "state", "product"], as_index=False)
-            .agg(
-                dk_gross_revenue=("gross_revenue", "sum"),
-                dk_handle=("handle", lambda s: s.sum(min_count=1)),
-            )
+        grouped = allocated.groupby(["quarter", "state", "product"], as_index=False).agg(
+            dk_gross_revenue=("gross_revenue", "sum"),
+            dk_handle=("handle", lambda s: s.sum(min_count=1)),
         )
         grouped["completeness"] = grouped["quarter"].map(completeness)
         parts.append(grouped)
@@ -133,9 +129,7 @@ def state_quarter_table(frames: dict[str, pd.DataFrame]) -> pd.DataFrame:
     )
 
 
-def coverage_summary(
-    state_quarter: pd.DataFrame, ground_truth: pd.DataFrame
-) -> pd.DataFrame:
+def coverage_summary(state_quarter: pd.DataFrame, ground_truth: pd.DataFrame) -> pd.DataFrame:
     """Per reported DKNG quarter: observed DK revenue and the coverage ratio."""
     unexpected = set(state_quarter["product"]) - {"osb", "igaming"}
     if unexpected:
@@ -180,9 +174,9 @@ def coverage_summary(
     out = out.merge(n_states, left_on="quarter", right_index=True, how="left")
     out = out.merge(partial, left_on="quarter", right_index=True, how="left")
     out = out.merge(missing, left_on="quarter", right_index=True, how="left")
-    out[["observed_osb", "observed_igaming"]] = out[
-        ["observed_osb", "observed_igaming"]
-    ].fillna(0.0)
+    out[["observed_osb", "observed_igaming"]] = out[["observed_osb", "observed_igaming"]].fillna(
+        0.0
+    )
     out["n_states"] = out["n_states"].fillna(0).astype(int)
     out["partial_states"] = out["partial_states"].fillna("")
     out["missing_states"] = out["missing_states"].fillna("")
@@ -204,9 +198,7 @@ def coverage_summary(
 
 
 def main() -> None:
-    frames = {
-        state: pd.read_parquet(PROCESSED / name) for state, name in STATE_FILES.items()
-    }
+    frames = {state: pd.read_parquet(PROCESSED / name) for state, name in STATE_FILES.items()}
     ground_truth = pd.read_csv(PROCESSED / "ground_truth_dkng.csv")
 
     state_quarter = state_quarter_table(frames)

@@ -43,7 +43,10 @@ def test_manifest_appends_one_row_per_download(fake_net, tmp_path):
     cache.fetch("https://example.test/b.xlsx")
     rows = [json.loads(ln) for ln in (tmp_path / "manifest.jsonl").read_text().splitlines()]
     assert len(rows) == 2
-    assert {r["url"] for r in rows} == {"https://example.test/a.xlsx", "https://example.test/b.xlsx"}
+    assert {r["url"] for r in rows} == {
+        "https://example.test/a.xlsx",
+        "https://example.test/b.xlsx",
+    }
     assert all(r["sha256"] and r["fetched_at"] for r in rows)
 
 
