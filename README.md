@@ -49,7 +49,7 @@ against archived dates; 17 quarters is a small sample.
 
 ```bash
 uv sync                             # create env, install package + dev deps
-uv run pytest                       # 202 tests against frozen fixtures, no network
+uv run pytest                       # 254 tests against frozen fixtures, no network
 uv run python -m ggr.ingest.edgar   # DraftKings ground truth from SEC EDGAR
 uv run python -m ggr.ingest.ny      # ... and likewise mi, pa, il, nj, indiana, ia
 uv run python -m ggr.coverage       # coverage of reported revenue, by quarter
