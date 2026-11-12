@@ -1,6 +1,7 @@
 """PA parser and discovery edge cases on synthetic inputs."""
 
 import openpyxl
+import pandas as pd
 import pytest
 
 from ggr.ingest.pa import FY_PARAM, fiscal_year_ids
@@ -134,3 +135,85 @@ def test_fiscal_year_ids_too_few_years_raises():
     html = f'<select name="{FY_PARAM}"><option value="285">FY 2025/2026</option></select>'
     with pytest.raises(ValueError, match="expected ≥8"):
         fiscal_year_ids(html)
+
+
+def test_build_refetches_only_the_two_newest_fiscal_years(monkeypatch):
+    from ggr.ingest import pa as ingest_pa
+
+    urls = {f"FY{y}-{str(y + 1)[2:]}": f"https://example.test/{y}.xlsx" for y in range(2018, 2027)}
+    forced = {}
+
+    def fake_fetch(url, subdir, force=False):
+        forced[url] = force
+        return url
+
+    def fake_parse(path, url):
+        year = int(url.rsplit("/", 1)[1][:4])
+        return pd.DataFrame(
+            {
+                "period_end": [pd.Timestamp(year, 12, 31)],
+                "operator_raw": ["X"],
+                "operator_canonical": ["x"],
+            }
+        )
+
+    # Deliberately unsorted: the choice must not depend on dictionary order.
+    monkeypatch.setattr(ingest_pa, "discover", lambda: dict(reversed(urls.items())))
+    monkeypatch.setattr(ingest_pa.cache, "fetch", fake_fetch)
+    monkeypatch.setattr(ingest_pa, "parse_workbook", fake_parse)
+    out = ingest_pa.build()
+    assert len(out) == 9
+    assert {u for u, f in forced.items() if f} == {
+        "https://example.test/2025.xlsx",
+        "https://example.test/2026.xlsx",
+    }
+
+
+@pytest.mark.parametrize("n_years, n_forced", [(1, 1), (2, 2), (3, 2)])
+def test_build_refetch_count_with_few_fiscal_years(monkeypatch, n_years, n_forced):
+    from ggr.ingest import pa as ingest_pa
+
+    urls = {
+        f"FY{y}-{str(y + 1)[2:]}": f"https://example.test/{y}.xlsx"
+        for y in range(2018, 2018 + n_years)
+    }
+    forced = []
+
+    def fake_fetch(url, subdir, force=False):
+        forced.append(force)
+        return url
+
+    def fake_parse(path, url):
+        year = int(url.rsplit("/", 1)[1][:4])
+        return pd.DataFrame(
+            {
+                "period_end": [pd.Timestamp(year, 12, 31)],
+                "operator_raw": ["X"],
+                "operator_canonical": ["x"],
+            }
+        )
+
+    monkeypatch.setattr(ingest_pa, "discover", lambda: urls)
+    monkeypatch.setattr(ingest_pa.cache, "fetch", fake_fetch)
+    monkeypatch.setattr(ingest_pa, "parse_workbook", fake_parse)
+    ingest_pa.build()
+    assert sum(forced) == n_forced
+    assert forced[-n_forced:] == [True] * n_forced
+
+
+def test_build_still_raises_on_overlapping_months(monkeypatch):
+    from ggr.ingest import pa as ingest_pa
+
+    urls = {"FY2024-25": "https://example.test/a.xlsx", "FY2025-26": "https://example.test/b.xlsx"}
+    same_month = pd.DataFrame(
+        {
+            "period_end": [pd.Timestamp("2025-06-30")],
+            "operator_raw": ["X"],
+            "operator_canonical": ["x"],
+        }
+    )
+    monkeypatch.setattr(ingest_pa, "discover", lambda: urls)
+    monkeypatch.setattr(ingest_pa.cache, "fetch", lambda url, subdir, force=False: url)
+    monkeypatch.setattr(ingest_pa, "parse_workbook", lambda path, url: same_month.copy())
+    with pytest.raises(ValueError, match="overlapping months"):
+        ingest_pa.build()

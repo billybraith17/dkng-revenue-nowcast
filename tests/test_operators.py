@@ -63,6 +63,19 @@ def test_alias_table_is_normalized():
         ("Golden Nugget", "golden_nugget"),
         ("TwinSpires", "twinspires"),
         ("FoxBet", "foxbet"),
+        # MI column labels from the 2026 files
+        ("BetPARX", "parx"),
+        ("NeoGames", "nyx"),
+        ("Strive Platform", "pala"),
+        ("Caesars/WSOP", "caesars"),
+        ("Caesars Horshoe", "caesars"),  # typo as printed by MGCB
+        ("Caesars Horseshoe", "caesars"),  # the same column in the gaming file
+        ("Hard Rock Bet", "hard_rock"),
+        ("Bet365", "bet365"),
+        ("Parx Interactive", "parx"),  # earlier label of the BetPARX column
+        ("NYX Digital", "nyx"),
+        ("Pala Interactive", "pala"),
+        ("theScore Bet", "penn"),
         # PA licensees
         ("HOLLYWOOD CASINO AT THE MEADOWS", "draftkings"),
         ("MEADOWS", "draftkings"),

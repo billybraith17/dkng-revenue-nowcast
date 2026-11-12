@@ -29,6 +29,7 @@ FY_PARAM = "field_gaming_revenue_fiscal_year_target_id"
 
 # Online sports wagering launched May 2019, i.e. fiscal year 2018/2019.
 FIRST_FISCAL_YEAR = 2018
+REFRESH_FISCAL_YEARS = 2
 
 
 def fiscal_year_ids(html: str) -> dict[str, str]:
@@ -73,9 +74,15 @@ def discover() -> dict[str, str]:
 
 
 def build() -> pd.DataFrame:
+    urls = discover()
+    # PGCB adds months to a fiscal year's workbook, usually under a new link
+    # each upload but not reliably. Re-download the two newest years on every
+    # run (the older one covers the weeks after a July rollover); the cache
+    # keeps any replaced copy as a vintage.
+    refresh = sorted(urls)[-REFRESH_FISCAL_YEARS:]
     frames = []
-    for url in discover().values():
-        frames.append(parse_workbook(cache.fetch(url, subdir="pa"), url))
+    for fy, url in urls.items():
+        frames.append(parse_workbook(cache.fetch(url, subdir="pa", force=fy in refresh), url))
     combined = pd.concat(frames, ignore_index=True)
     # Fiscal years are disjoint; any collision means PGCB republished a month.
     dupes = combined.duplicated(["period_end", "operator_raw"], keep=False)
