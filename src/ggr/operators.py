@@ -55,6 +55,10 @@ ALIASES: dict[str, str] = {
     "nyx digital": "nyx",
     "pala interactive": "pala",
     "parx interactive": "parx",
+    # 2026 relabels of the same licences; earlier slug kept for continuity.
+    "betparx": "parx",
+    "neogames": "nyx",
+    "strive platform": "pala",
     "rush street": "rsi",
     "twinspires": "twinspires",  # Churchill Downs, exited early 2022
     # Kept separate from caesars: both operated in MI simultaneously in 2021,

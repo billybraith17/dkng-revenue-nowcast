@@ -3,7 +3,8 @@
 The reports live behind an ASP.NET WebForms app (igbapps.illinois.gov) embedded
 in the IGB site: a GET collects __VIEWSTATE tokens, then each month is a form
 POST returning CSV. Months are cached individually; the trailing three months
-are refetched on every run because IGB revises recent figures (accrual basis).
+are refetched on every run because IGB revises recent figures (accrual basis),
+as is any cached month that holds the app's HTML page instead of a report.
 
 Online wagering began June 2020 (in-person March 2020; we keep online only).
 
@@ -13,12 +14,13 @@ Run ``uv run python -m ggr.ingest.il`` to write data/processed/il_monthly.parque
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
 
 import pandas as pd
 from bs4 import BeautifulSoup
 
 from ggr import cache
-from ggr.config import DATA_PROCESSED
+from ggr.config import DATA_PROCESSED, DATA_RAW
 from ggr.parse.il import month_range, parse_csv
 
 APP_URL = "https://igbapps.illinois.gov/SportsReports_AEM.aspx"
@@ -36,6 +38,14 @@ def _form_tokens() -> dict[str, str]:
     }
 
 
+def _is_report(path: Path) -> bool:
+    """False for the app's HTML page, which it returns instead of a report when
+    it has nothing for the month (not yet published, or the app is failing).
+    A report is CSV and opens with a quoted title; an empty file is not one."""
+    text = path.read_text(errors="replace").lstrip()
+    return bool(text) and not text.startswith("<")
+
+
 def fetch_month(year: int, month: int, tokens: dict[str, str]) -> tuple:
     month_name = dt.date(year, month, 1).strftime("%B")
     data = tokens | {
@@ -49,13 +59,18 @@ def fetch_month(year: int, month: int, tokens: dict[str, str]) -> tuple:
         "ButtonSearch.x": "10",
         "ButtonSearch.y": "10",
     }
+    name = f"il_detail_{year}-{month:02d}.csv"
     age_days = (dt.date.today() - dt.date(year, month, 1)).days
+    # A month first requested before it was published is cached as the app's
+    # HTML page. Ask again however old it is, or it would block every later run.
+    cached = DATA_RAW / "il" / name
+    stale_placeholder = cached.exists() and not _is_report(cached)
     path = cache.fetch_post(
         APP_URL,
         data,
-        name=f"il_detail_{year}-{month:02d}.csv",
+        name=name,
         subdir="il",
-        force=age_days < REFETCH_TRAILING_DAYS,
+        force=age_days < REFETCH_TRAILING_DAYS or stale_placeholder,
     )
     return path, f"{APP_URL}#accrual-detail-{year}-{month:02d}"
 
