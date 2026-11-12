@@ -1,10 +1,11 @@
 """Walk-forward nowcast of DKNG quarterly revenue from covered-state data.
 
-Each target quarter uses only information public before its ``first_filed``
-date:
+Each target quarter uses only information public before its revenue was: the
+day before the earnings release or the 10-Q/10-K, whichever came first
+(``public_from``).
 
 1. Covered revenue ``C_q``: DK-attributable state revenue for the quarter as
-   of the day before ``first_filed``, with months not yet published (mostly
+   of the day before ``public_from``, with months not yet published (mostly
    IL) imputed by ``ggr.panel.impute_month``.
 2. Fit ``log R = a + b·log C + c·t`` on earlier quarters already filed by
    then. The trend term absorbs slow drift in the R/C ratio.
@@ -107,10 +108,20 @@ def _quarter_index(quarter: str) -> int:
     return period.year * 4 + period.quarter
 
 
+def _public_from(ground_truth: pd.DataFrame) -> pd.Series:
+    """Date each quarter's revenue became public: the earlier of the earnings
+    release and the first SEC filing carrying it."""
+    first_filed = pd.to_datetime(ground_truth["first_filed"])
+    if "earnings_date" not in ground_truth:
+        return first_filed
+    earnings = pd.to_datetime(ground_truth["earnings_date"])
+    return earnings.fillna(first_filed).clip(upper=first_filed)
+
+
 def walk_forward(panel: pd.DataFrame, ground_truth: pd.DataFrame) -> pd.DataFrame:
     """One row per target quarter: prediction, actual, baselines, interval."""
     gt = ground_truth.copy()
-    gt["first_filed"] = pd.to_datetime(gt["first_filed"])
+    gt["public_from"] = _public_from(gt)
     gt = gt.sort_values("quarter").reset_index(drop=True)
     reported = gt.set_index("quarter")["revenue_usd"]
 
@@ -119,8 +130,8 @@ def walk_forward(panel: pd.DataFrame, ground_truth: pd.DataFrame) -> pd.DataFram
     for target in gt.itertuples():
         if target.quarter < FIRST_TARGET:
             continue
-        as_of = target.first_filed - pd.Timedelta(days=1)
-        train = gt[(gt["first_filed"] <= as_of) & (gt["quarter"] < target.quarter)]
+        as_of = target.public_from - pd.Timedelta(days=1)
+        train = gt[(gt["public_from"] <= as_of) & (gt["quarter"] < target.quarter)]
         if len(train) < MIN_TRAIN_QUARTERS:
             continue
 

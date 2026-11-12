@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from ggr.nowcast import (
+    _public_from,
     covered_quarter,
     fit_predict,
     fit_predict_levels,
@@ -207,3 +208,151 @@ def test_intervals_appear_after_enough_errors_with_quantile_width():
     width = float(np.quantile(prior, 0.8))
     assert row["interval_low"] == pytest.approx(row["prediction"] * (1 - width))
     assert row["interval_high"] == pytest.approx(row["prediction"] * (1 + width))
+
+
+# --- The information clock: earlier of earnings release and first filing ---
+
+
+def _clock(first_filed, earnings=...):
+    gt = pd.DataFrame({"first_filed": first_filed})
+    if earnings is not ...:
+        gt["earnings_date"] = earnings
+    return list(_public_from(gt))
+
+
+def test_public_from_is_first_filed_without_an_earnings_column():
+    assert _clock(["2024-05-03"]) == [pd.Timestamp("2024-05-03")]
+
+
+def test_public_from_takes_the_earlier_date():
+    got = _clock(
+        ["2024-05-03", "2024-08-02", "2024-11-08", "2025-02-14"],
+        ["2024-05-02", "2024-08-02", "2024-11-12", None],
+    )
+    assert got == [
+        pd.Timestamp("2024-05-02"),  # release the day before the filing
+        pd.Timestamp("2024-08-02"),  # same day
+        pd.Timestamp("2024-11-08"),  # release recorded after the filing: filing wins
+        pd.Timestamp("2025-02-14"),  # no release on file: filing date
+    ]
+
+
+def test_public_from_with_no_releases_at_all():
+    # An all-empty column read back from CSV arrives as float NaN.
+    assert _clock(["2024-05-03", "2024-08-02"], [float("nan"), float("nan")]) == [
+        pd.Timestamp("2024-05-03"),
+        pd.Timestamp("2024-08-02"),
+    ]
+
+
+def test_public_from_survives_a_csv_round_trip(tmp_path):
+    gt = pd.DataFrame(
+        {
+            "first_filed": pd.to_datetime(["2020-08-14", "2024-05-03"]),
+            "earnings_date": pd.to_datetime([None, "2024-05-02"]),
+        }
+    )
+    gt.to_csv(tmp_path / "gt.csv", index=False)
+    assert list(_public_from(pd.read_csv(tmp_path / "gt.csv"))) == [
+        pd.Timestamp("2020-08-14"),
+        pd.Timestamp("2024-05-02"),
+    ]
+
+
+def test_public_from_keeps_the_frame_index():
+    gt = pd.DataFrame(
+        {"first_filed": ["2024-05-03", "2024-08-02"], "earnings_date": ["2024-05-02", None]},
+        index=[7, 3],
+    )
+    assert list(_public_from(gt).index) == [7, 3]
+
+
+def _small_world():
+    """Ten quarters (2020Q1-2022Q2): two targets, enough for the clock tests."""
+    return _synthetic_world(n_quarters=10)
+
+
+def _with_release_day_before_filing(gt):
+    gt = gt.copy()
+    gt["earnings_date"] = (pd.to_datetime(gt["first_filed"]) - pd.Timedelta(days=1)).dt.date
+    return gt
+
+
+def test_clock_stops_before_an_earnings_release_that_precedes_the_filing():
+    panel, gt = _small_world()
+    early_gt = _with_release_day_before_filing(gt)
+    early_gt.loc[0, "earnings_date"] = None  # none on file for the first quarter
+    plain = walk_forward(panel, gt)
+    early = walk_forward(panel, early_gt)
+    assert list(early["quarter"]) == list(plain["quarter"])
+    shift = pd.to_datetime(plain["as_of"]) - pd.to_datetime(early["as_of"])
+    assert (shift == pd.Timedelta(days=1)).all()
+
+
+def test_release_on_the_filing_day_changes_nothing():
+    panel, gt = _small_world()
+    same_day = gt.assign(earnings_date=gt["first_filed"])
+    pd.testing.assert_frame_equal(walk_forward(panel, same_day), walk_forward(panel, gt))
+
+
+def test_release_after_the_filing_changes_nothing():
+    panel, gt = _small_world()
+    late = gt.assign(
+        earnings_date=(pd.to_datetime(gt["first_filed"]) + pd.Timedelta(days=3)).dt.date
+    )
+    pd.testing.assert_frame_equal(walk_forward(panel, late), walk_forward(panel, gt))
+
+
+def test_data_published_on_earnings_day_is_not_used():
+    panel, gt = _small_world()
+    gt = _with_release_day_before_filing(gt)
+    last = gt.iloc[-1]
+    earnings_day = pd.Timestamp(last["earnings_date"])
+    target_month = quarter_month_ends(last["quarter"])[-1]
+    # A second state mirroring NY, so its unpublished month can be imputed (at
+    # NY's value for the month) and a published one stands out by +500.
+    twin = panel.assign(state="NJ")
+    final = twin["month_end"] == target_month
+    twin.loc[final, "revenue"] += 500.0
+
+    def covered(available_from):
+        twin.loc[final, "available_from"] = available_from
+        return walk_forward(pd.concat([panel, twin]), gt)["covered_revenue"].iloc[-1]
+
+    unpublished = covered(pd.Timestamp("2099-01-01"))
+    assert covered(earnings_day) == pytest.approx(unpublished)  # too late to count
+    assert covered(earnings_day - pd.Timedelta(days=1)) == pytest.approx(unpublished + 500.0)
+
+
+def test_quarter_released_on_the_cutoff_day_is_in_training():
+    panel, gt = _small_world()
+    target = gt.iloc[-1]
+    cutoff = pd.Timestamp(target["first_filed"]) - pd.Timedelta(days=1)
+    previous = gt.index[-2]
+
+    def last_prediction(previous_public):
+        g = gt.copy()
+        g.loc[previous, "first_filed"] = previous_public.date()
+        g.loc[previous, "revenue_usd"] *= 3  # visible only if it is trained on
+        return walk_forward(panel, g)["prediction"].iloc[-1]
+
+    clean = walk_forward(panel, gt.drop(index=previous))["prediction"].iloc[-1]
+    assert last_prediction(cutoff) != pytest.approx(clean, rel=1e-3)  # public by the cut-off
+    assert last_prediction(cutoff + pd.Timedelta(days=1)) == pytest.approx(clean)  # not yet
+
+
+def test_earnings_date_can_bring_a_training_quarter_forward():
+    # 2020Q1's revenue reached XBRL a year late but was released in May 2020.
+    panel, gt = _small_world()
+    target = gt.iloc[-1]
+    previous = gt.index[-2]
+    g = gt.copy()
+    g.loc[previous, "first_filed"] = (
+        pd.Timestamp(target["first_filed"]) + pd.Timedelta(days=300)
+    ).date()
+    g.loc[previous, "revenue_usd"] *= 3
+    without = walk_forward(panel, g)["prediction"].iloc[-1]
+    g["earnings_date"] = None
+    g.loc[previous, "earnings_date"] = gt.loc[previous, "first_filed"]
+    with_release = walk_forward(panel, g)["prediction"].iloc[-1]
+    assert with_release != pytest.approx(without, rel=1e-3)
